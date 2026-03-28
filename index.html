@@ -109,8 +109,9 @@
   .tl-photos img { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
   .tl-delete { position: absolute; right: 0; top: 4px; background: none; border: none; color: rgba(255,255,255,0.2); font-size: 0.85rem; cursor: pointer; padding: 4px; }
   .tl-delete:hover { color: #f87171; }
-  .tl-edit { position: absolute; right: 0; top: 4px; background: none; border: none; font-size: 0.72rem; cursor: pointer; padding: 4px; opacity: 0.4; transition: opacity 0.2s; }
-  .tl-edit:hover, .tl-edit:active { opacity: 1; }
+  .tl-edit { position: absolute; right: 0; top: 4px; background: none; border: none; cursor: pointer; padding: 4px; opacity: 0.3; transition: opacity 0.2s; width: 20px; height: 20px; }
+  .tl-edit:hover, .tl-edit:active { opacity: 0.7; }
+  .tl-edit svg { width: 14px; height: 14px; }
 
   /* Expense list */
   .exp-item { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
@@ -900,11 +901,11 @@ function renderOverview() {
         const t = ev.data;
         const ph = t.photos && t.photos.length > 0
           ? `<div class="tl-photos">${t.photos.map(p => `<img src="${p}" onclick="openLightbox(this.src)">`).join('')}</div>` : '';
-        html += `<div class="tl-item"><div class="tl-dot"></div><button class="tl-edit" onclick="editTrip(event,${t.id})">✏️</button><div class="tl-date">${time}</div><div class="tl-place">📍 ${escHtml(t.place)}</div>${t.note ? `<div class="tl-note">${escHtml(t.note)}</div>` : ''}${ph}</div>`;
+        html += `<div class="tl-item"><div class="tl-dot"></div><button class="tl-edit" onclick="editTrip(event,${t.id})"><svg viewBox="0 0 24 24" fill="none" stroke="#8bbad0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><div class="tl-date">${time}</div><div class="tl-place">📍 ${escHtml(t.place)}</div>${t.note ? `<div class="tl-note">${escHtml(t.note)}</div>` : ''}${ph}</div>`;
       } else {
         const e = ev.data;
         const cat = catMap[e.cat] || catMap.other;
-        html += `<div class="tl-item"><div class="tl-dot" style="background:#f59e0b;box-shadow:0 0 0 2px #f59e0b;"></div><button class="tl-edit" onclick="editExpense(event,${e.id})">✏️</button><div class="tl-date">${time}</div><div class="tl-place">${cat.icon} ${escHtml(e.memo)}</div><div class="tl-note">$${e.amount.toFixed(2)}（≈ NT$${e.twd.toLocaleString()}）</div></div>`;
+        html += `<div class="tl-item"><div class="tl-dot" style="background:#f59e0b;box-shadow:0 0 0 2px #f59e0b;"></div><button class="tl-edit" onclick="editExpense(event,${e.id})"><svg viewBox="0 0 24 24" fill="none" stroke="#8bbad0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><div class="tl-date">${time}</div><div class="tl-place">${cat.icon} ${escHtml(e.memo)}</div><div class="tl-note">$${e.amount.toFixed(2)}（≈ NT$${e.twd.toLocaleString()}）</div></div>`;
       }
     });
     html += '</div></div>';
@@ -919,12 +920,12 @@ function editTrip(e, id) {
   if (!t) return false;
   const modal = document.getElementById('edit-modal');
   document.getElementById('edit-modal-body').innerHTML = `
-    <div class="edit-modal-title">✏️ 編輯足跡</div>
+    <div class="edit-modal-title">編輯足跡</div>
     <div class="field"><label>地點</label><input type="text" id="edit-place" value="${escAttr(t.place)}"></div>
     <div class="field"><label>時間</label><input type="datetime-local" id="edit-time" value="${t.time.slice(0,16)}"></div>
     <div class="field"><label>備註</label><textarea id="edit-note">${escHtml(t.note || '')}</textarea></div>
     <button class="btn btn-primary" onclick="saveEditTrip(${id})">儲存修改</button>
-    <button class="btn btn-danger" onclick="deleteTrip(${id});closeEditModal()" style="margin-top:8px;">刪除這筆</button>
+    <button class="btn btn-danger" onclick="closeEditModal();deleteTrip(${id})" style="margin-top:8px;">刪除這筆</button>
     <button class="btn btn-secondary" onclick="closeEditModal()" style="margin-top:8px;">取消</button>
   `;
   modal.classList.add('show');
@@ -947,11 +948,11 @@ function editExpense(e, id) {
   if (!exp) return false;
   const modal = document.getElementById('edit-modal');
   document.getElementById('edit-modal-body').innerHTML = `
-    <div class="edit-modal-title">✏️ 編輯花費</div>
+    <div class="edit-modal-title">編輯花費</div>
     <div class="field"><label>金額 (USD)</label><input type="number" id="edit-amount" value="${exp.amount}" inputmode="decimal"></div>
     <div class="field"><label>備註</label><textarea id="edit-memo">${escHtml(exp.memo || '')}</textarea></div>
     <button class="btn btn-primary" onclick="saveEditExpense(${id})">儲存修改</button>
-    <button class="btn btn-danger" onclick="deleteExpense(${id});closeEditModal()" style="margin-top:8px;">刪除這筆</button>
+    <button class="btn btn-danger" onclick="closeEditModal();deleteExpense(${id})" style="margin-top:8px;">刪除這筆</button>
     <button class="btn btn-secondary" onclick="closeEditModal()" style="margin-top:8px;">取消</button>
   `;
   modal.classList.add('show');
