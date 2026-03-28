@@ -174,11 +174,47 @@
   .page { display: none; }
   .page.active { display: block; }
 
-  /* Bubbles decoration */
+  /* Bubbles decoration - 3D */
   .bubbles { position: fixed; bottom: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 0; }
-  .bubble { position: absolute; bottom: -20px; background: rgba(94,196,212,0.04); border-radius: 50%; animation: rise linear infinite; }
-  @keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-100vh) scale(0.5); opacity: 0; } }
+  .bubble {
+    position: absolute; bottom: -20px; border-radius: 50%; animation: rise linear infinite;
+    background: radial-gradient(ellipse at 30% 30%, rgba(180,230,250,0.18), rgba(94,196,212,0.06) 50%, rgba(94,196,212,0.02) 80%, transparent);
+    box-shadow: inset -2px -4px 6px rgba(0,0,0,0.08), inset 2px 2px 4px rgba(200,240,255,0.12);
+    border: 1px solid rgba(180,230,250,0.08);
+  }
+  @keyframes rise { 0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0.8; } 50% { opacity: 1; } 100% { transform: translateY(-100vh) scale(0.4) rotate(15deg); opacity: 0; } }
   .container { position: relative; z-index: 1; }
+
+  /* Silhouettes */
+  .silhouettes { position: relative; margin-top: 24px; height: 60px; overflow: hidden; opacity: 0.15; }
+  .sil { position: absolute; bottom: 0; font-size: 2rem; animation: swim linear infinite; }
+  @keyframes swim { 0% { transform: translateX(-40px); } 100% { transform: translateX(calc(100vw + 40px)); } }
+
+  /* Fish Guide */
+  .fish-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .fish-card {
+    background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px 8px; text-align: center;
+    border: 2px solid rgba(255,255,255,0.08); cursor: pointer; transition: all 0.3s; position: relative;
+    user-select: none; -webkit-user-select: none;
+  }
+  .fish-card.revealed .fish-emoji { filter: none; }
+  .fish-card.seen { border-color: #f59e0b; background: rgba(245,158,11,0.1); box-shadow: 0 0 12px rgba(245,158,11,0.25), inset 0 0 8px rgba(245,158,11,0.08); }
+  .fish-card.seen .fish-emoji { filter: none; }
+  .fish-emoji { font-size: 2rem; display: block; margin-bottom: 4px; filter: brightness(0) invert(0.15); transition: filter 0.3s; }
+  .fish-name { font-size: 0.7rem; font-weight: 600; color: #8bbad0; }
+  .fish-card.seen .fish-name { color: #f59e0b; }
+  .fish-stars { font-size: 0.6rem; margin-top: 3px; letter-spacing: 1px; }
+  .fish-stars .star-on { color: #f59e0b; }
+  .fish-stars .star-off { color: rgba(255,255,255,0.12); }
+  .fish-seen-badge {
+    position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; border-radius: 50%;
+    background: #f59e0b; color: #fff; font-size: 0.6rem; font-weight: 800;
+    display: none; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(245,158,11,0.4);
+  }
+  .fish-card.seen .fish-seen-badge { display: flex; }
+  .fish-progress { text-align: center; margin-bottom: 14px; font-size: 0.78rem; color: #6b9ab8; }
+  .fish-progress strong { color: #5ec4d4; }
 </style>
 </head>
 <body>
@@ -236,11 +272,27 @@
         <div class="nav-label">航班住宿</div>
         <div class="nav-desc">班機飯店</div>
       </div>
+      <div class="nav-card" onclick="goPage('fishguide')">
+        <div class="nav-icon">🐠</div>
+        <div class="nav-label">生物圖鑑</div>
+        <div class="nav-desc">收集帛琉</div>
+        <div class="nav-badge" id="badge-fish" style="display:none;">0</div>
+      </div>
       <div class="nav-card" onclick="goPage('emergency')">
         <div class="nav-icon">🆘</div>
         <div class="nav-label">緊急資訊</div>
         <div class="nav-desc">急難救助</div>
       </div>
+    </div>
+
+    <!-- Silhouettes -->
+    <div class="silhouettes">
+      <div class="sil" style="left:0;font-size:1.8rem;animation-duration:18s;animation-delay:0s;bottom:5px;">🐢</div>
+      <div class="sil" style="left:0;font-size:1.4rem;animation-duration:22s;animation-delay:3s;bottom:20px;">🐠</div>
+      <div class="sil" style="left:0;font-size:2.2rem;animation-duration:25s;animation-delay:7s;bottom:0px;">🦈</div>
+      <div class="sil" style="left:0;font-size:1.2rem;animation-duration:15s;animation-delay:5s;bottom:30px;">🐡</div>
+      <div class="sil" style="left:0;font-size:1.6rem;animation-duration:20s;animation-delay:12s;bottom:10px;">🦑</div>
+      <div class="sil" style="left:0;font-size:2.5rem;animation-duration:30s;animation-delay:2s;bottom:0px;">🐋</div>
     </div>
   </div>
 
@@ -397,6 +449,17 @@
     </div>
   </div>
 
+  <!-- ===== 生物圖鑑 ===== -->
+  <div id="page-fishguide" class="page">
+    <button class="back-btn" onclick="goPage('home')">← 首頁</button>
+    <div class="header" style="margin-bottom:14px;">
+      <h1>🐠 帛琉生物圖鑑</h1>
+      <p>點擊翻牌 ｜ 連點三下 = 我看到了！</p>
+    </div>
+    <div class="fish-progress" id="fish-progress"></div>
+    <div class="fish-grid" id="fish-grid"></div>
+  </div>
+
   <!-- ===== 緊急資訊 ===== -->
   <div id="page-emergency" class="page">
     <button class="back-btn" onclick="goPage('home')">← 首頁</button>
@@ -456,18 +519,18 @@ let rateDate = localStorage.getItem('palau-rate-date') || '';
 let photos = [null, null];
 let selectedCat = '';
 
-// ===== Bubbles =====
+// ===== Bubbles (3D) =====
 (function createBubbles() {
   const container = document.getElementById('bubbles');
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 15; i++) {
     const b = document.createElement('div');
     b.className = 'bubble';
-    const size = Math.random() * 40 + 10;
+    const size = Math.random() * 50 + 8;
     b.style.width = size + 'px';
     b.style.height = size + 'px';
     b.style.left = Math.random() * 100 + '%';
-    b.style.animationDuration = (Math.random() * 15 + 10) + 's';
-    b.style.animationDelay = (Math.random() * 10) + 's';
+    b.style.animationDuration = (Math.random() * 18 + 12) + 's';
+    b.style.animationDelay = (Math.random() * 12) + 's';
     container.appendChild(b);
   }
 })();
@@ -481,6 +544,7 @@ function goPage(page) {
   if (page === 'trip') { setDefaultTime(); renderTrips(); }
   if (page === 'expense') { renderExpenses(); updateExpRateDisplay(); }
   if (page === 'overview') renderOverview();
+  if (page === 'fishguide') renderFishGuide();
   if (page === 'flight') loadFlightInfo();
   if (page === 'emergency') loadEmergencyInfo();
 }
@@ -488,10 +552,14 @@ function goPage(page) {
 function updateBadges() {
   const tripBadge = document.getElementById('badge-trip');
   const expBadge = document.getElementById('badge-expense');
+  const fishBadge = document.getElementById('badge-fish');
   if (trips.length > 0) { tripBadge.style.display = 'inline-block'; tripBadge.textContent = trips.length; }
   else { tripBadge.style.display = 'none'; }
   if (expenses.length > 0) { expBadge.style.display = 'inline-block'; expBadge.textContent = expenses.length; }
   else { expBadge.style.display = 'none'; }
+  const seenCount = fishList.filter(f => (fishState[f.id] || 0) >= 3).length;
+  if (seenCount > 0) { fishBadge.style.display = 'inline-block'; fishBadge.textContent = seenCount; }
+  else { fishBadge.style.display = 'none'; }
 }
 
 // ===== Exchange Rate =====
@@ -817,6 +885,65 @@ function openLightbox(src) {
   document.getElementById('lightbox').classList.add('show');
 }
 function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
+
+// ===== Fish Guide =====
+const fishList = [
+  { id: 'jellyfish', emoji: '🪼', name: '黃金水母', stars: 3, desc: '水母湖限定，無毒水母' },
+  { id: 'turtle', emoji: '🐢', name: '海龜', stars: 3, desc: '綠蠵龜、玳瑁' },
+  { id: 'clownfish', emoji: '🐠', name: '小丑魚', stars: 3, desc: '尼莫本人' },
+  { id: 'parrotfish', emoji: '🐟', name: '鸚哥魚', stars: 3, desc: '珊瑚礁常見的繽紛魚類' },
+  { id: 'butterflyfish', emoji: '🦋', name: '蝴蝶魚', stars: 3, desc: '各種花紋的珊瑚魚' },
+  { id: 'grouper', emoji: '🐡', name: '石斑魚', stars: 2, desc: '躲在珊瑚礁縫隙' },
+  { id: 'reefshark', emoji: '🦈', name: '黑鰭鯊', stars: 2, desc: '礁鯊，通常不攻擊人' },
+  { id: 'manta', emoji: '🦅', name: '魔鬼魟', stars: 2, desc: '翼展可達 3 公尺' },
+  { id: 'napoleon', emoji: '🐋', name: '拿破崙魚', stars: 2, desc: '又稱龍王鯛，帛琉明星' },
+  { id: 'lionfish', emoji: '🦔', name: '獅子魚', stars: 2, desc: '華麗但有毒的鰭刺' },
+  { id: 'nudibranch', emoji: '🐌', name: '海蛞蝓', stars: 2, desc: '海底的活寶石' },
+  { id: 'octopus', emoji: '🐙', name: '章魚', stars: 2, desc: '偽裝大師' },
+  { id: 'squid', emoji: '🦑', name: '魷魚', stars: 2, desc: '夜潛常見' },
+  { id: 'starfish', emoji: '⭐', name: '海星', stars: 3, desc: '砂地上的五角明星' },
+  { id: 'eel', emoji: '🐍', name: '海鰻', stars: 2, desc: '躲在洞裡探頭' },
+  { id: 'crab', emoji: '🦀', name: '椰子蟹', stars: 1, desc: '世界最大陸生蟹' },
+  { id: 'hammerhead', emoji: '🔨', name: '鎚頭鯊', stars: 1, desc: '藍角深水區偶遇' },
+  { id: 'dugong', emoji: '🦭', name: '儒艮', stars: 1, desc: '美人魚傳說原型' },
+  { id: 'whaleshark', emoji: '🐳', name: '鯨鯊', stars: 1, desc: '海中最大的魚' },
+  { id: 'crocodile', emoji: '🐊', name: '鹹水鱷', stars: 1, desc: '紅樹林棲息，極稀有' },
+  { id: 'dolphin', emoji: '🐬', name: '海豚', stars: 1, desc: '船程中有機會遇見' },
+];
+
+let fishState = JSON.parse(localStorage.getItem('palau-fish') || '{}');
+
+function renderFishGuide() {
+  const grid = document.getElementById('fish-grid');
+  const seenCount = fishList.filter(f => (fishState[f.id] || 0) >= 3).length;
+  document.getElementById('fish-progress').innerHTML = `已發現 <strong>${seenCount}</strong> / ${fishList.length} 種`;
+
+  grid.innerHTML = fishList.map(f => {
+    const clicks = fishState[f.id] || 0;
+    const seen = clicks >= 3;
+    const revealed = seen || (clicks % 2 === 1);
+    const starsHtml = Array.from({length: 3}, (_, i) =>
+      `<span class="${i < f.stars ? 'star-on' : 'star-off'}">${i < f.stars ? '★' : '☆'}</span>`
+    ).join('');
+    return `<div class="fish-card ${revealed ? 'revealed' : ''} ${seen ? 'seen' : ''}" onclick="clickFish('${f.id}')" title="${f.desc}">
+      <div class="fish-seen-badge">✓</div>
+      <span class="fish-emoji">${f.emoji}</span>
+      <div class="fish-name">${f.name}</div>
+      <div class="fish-stars">${starsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function clickFish(id) {
+  const clicks = (fishState[id] || 0) + 1;
+  fishState[id] = clicks;
+  localStorage.setItem('palau-fish', JSON.stringify(fishState));
+  renderFishGuide();
+  if (clicks === 3) {
+    const fish = fishList.find(f => f.id === id);
+    if (fish) setTimeout(() => alert(`🎉 發現${fish.name}！\n${fish.desc}`), 100);
+  }
+}
 
 // ===== Utils =====
 function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
