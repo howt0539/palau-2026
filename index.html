@@ -627,9 +627,15 @@ function px(name, size) {
   return `<span style="display:inline-block;width:${size}px;height:${size}px;image-rendering:pixelated;">${PX[name] || ''}</span>`;
 }
 
+// ===== API =====
+const API_BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  ? 'http://localhost:8787'
+  : 'https://palau-trip-api.howt0539.workers.dev';
+
 // ===== State =====
 let trips = JSON.parse(localStorage.getItem('palau-trips') || '[]');
 let expenses = JSON.parse(localStorage.getItem('palau-expenses') || '[]');
+let expensesLoaded = false;
 let flightInfo = JSON.parse(localStorage.getItem('palau-flight') || '{}');
 let emergencyInfo = JSON.parse(localStorage.getItem('palau-emergency') || '{}');
 let exchangeRate = parseFloat(localStorage.getItem('palau-rate') || '0');
@@ -765,6 +771,22 @@ function updateExpRateDisplay() {
   document.getElementById('rate-display-exp').textContent = text;
 }
 
+// ===== Load from Notion =====
+async function loadExpensesFromAPI() {
+  try {
+    const res = await fetch(API_BASE + '/api/expenses');
+    if (!res.ok) throw new Error('API error');
+    const remote = await res.json();
+    if (remote.length > 0 || expenses.length === 0) {
+      expenses = remote;
+      localStorage.setItem('palau-expenses', JSON.stringify(expenses));
+      expensesLoaded = true;
+      renderExpenses();
+      if (document.getElementById('page-overview').classList.contains('active')) renderOverview();
+    }
+  } catch (e) { console.warn('Failed to load from Notion, using localStorage:', e); }
+}
+
 // ===== Expense Steps =====
 function goStep(n) {
   if (n === 2) {
@@ -791,11 +813,15 @@ const catMap = {
   other: { icon: 'other', name: '其他' },
 };
 
-function saveExpense() {
+async function saveExpense() {
   const amount = parseFloat(document.getElementById('exp-amount').value);
   const memo = document.getElementById('exp-memo').value.trim();
   const twd = Math.round(amount * exchangeRate);
-  expenses.push({ id: Date.now(), amount, twd, rate: exchangeRate, cat: selectedCat, memo: memo || catMap[selectedCat].name, time: new Date().toISOString() });
+  const entry = { amount, twd, rate: exchangeRate, cat: selectedCat, memo: memo || catMap[selectedCat].name, time: new Date().toISOString() };
+
+  // Optimistic local update
+  const localId = Date.now();
+  expenses.push({ ...entry, id: localId });
   localStorage.setItem('palau-expenses', JSON.stringify(expenses));
   document.getElementById('exp-amount').value = '';
   document.getElementById('exp-memo').value = '';
@@ -804,14 +830,37 @@ function saveExpense() {
   selectedCat = '';
   goStep(1);
   renderExpenses();
+
+  // Sync to Notion
+  try {
+    const res = await fetch(API_BASE + '/api/expenses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+    });
+    if (res.ok) {
+      const saved = await res.json();
+      const idx = expenses.findIndex(e => e.id === localId);
+      if (idx !== -1) { expenses[idx].id = saved.id; }
+      localStorage.setItem('palau-expenses', JSON.stringify(expenses));
+      renderExpenses();
+    }
+  } catch (e) { console.warn('Notion sync failed, kept locally:', e); }
 }
 
-function deleteExpense(id) {
+async function deleteExpense(id) {
   if (!confirm('確定刪除這筆？')) return;
-  expenses = expenses.filter(e => e.id !== id);
+  expenses = expenses.filter(e => String(e.id) !== String(id));
   localStorage.setItem('palau-expenses', JSON.stringify(expenses));
   renderExpenses();
   renderOverview();
+
+  // Sync to Notion (Notion IDs are UUIDs, local IDs are numbers)
+  if (typeof id === 'string' && id.includes('-')) {
+    try {
+      await fetch(API_BASE + '/api/expenses/' + id, { method: 'DELETE' });
+    } catch (e) { console.warn('Notion delete failed:', e); }
+  }
 }
 
 function renderExpenses() {
@@ -839,7 +888,7 @@ function renderExpenses() {
     html += `<div class="date-group">${date}</div>`;
     items.forEach(e => {
       const cat = catMap[e.cat] || catMap.other;
-      html += `<div class="exp-item"><div class="exp-icon">${px(cat.icon, 20)}</div><div class="exp-info"><div class="exp-cat">${cat.name}</div><div class="exp-note">${escHtml(e.memo)}</div></div><div class="exp-amounts"><div class="exp-usd">$${e.amount.toFixed(2)}</div><div class="exp-twd">≈ NT$${e.twd.toLocaleString()}</div></div><button class="exp-delete" onclick="deleteExpense(${e.id})">✕</button></div>`;
+      html += `<div class="exp-item"><div class="exp-icon">${px(cat.icon, 20)}</div><div class="exp-info"><div class="exp-cat">${cat.name}</div><div class="exp-note">${escHtml(e.memo)}</div></div><div class="exp-amounts"><div class="exp-usd">$${e.amount.toFixed(2)}</div><div class="exp-twd">≈ NT$${e.twd.toLocaleString()}</div></div><button class="exp-delete" onclick="deleteExpense('${e.id}')">✕</button></div>`;
     });
   }
   html += `<div class="exp-total"><span>合計</span><span>$${totalUsd.toFixed(2)}（≈ NT$${totalTwd.toLocaleString()}）</span></div></div>`;
@@ -1035,8 +1084,8 @@ function editExpense(e, id) {
     <div class="edit-modal-title">編輯花費</div>
     <div class="field"><label>金額 (USD)</label><input type="number" id="edit-amount" value="${exp.amount}" inputmode="decimal"></div>
     <div class="field"><label>備註</label><textarea id="edit-memo">${escHtml(exp.memo || '')}</textarea></div>
-    <button class="btn btn-primary" onclick="saveEditExpense(${id})">儲存修改</button>
-    <button class="btn btn-danger" onclick="closeEditModal();deleteExpense(${id})" style="margin-top:8px;">刪除這筆</button>
+    <button class="btn btn-primary" onclick="saveEditExpense('${id}')">儲存修改</button>
+    <button class="btn btn-danger" onclick="closeEditModal();deleteExpense('${id}')" style="margin-top:8px;">刪除這筆</button>
     <button class="btn btn-secondary" onclick="closeEditModal()" style="margin-top:8px;">取消</button>
   `;
   modal.classList.add('show');
@@ -1044,14 +1093,27 @@ function editExpense(e, id) {
 }
 
 function saveEditExpense(id) {
-  const exp = expenses.find(x => x.id === id);
+  const exp = expenses.find(x => String(x.id) === String(id));
   if (!exp) return;
   const idx = expenses.indexOf(exp);
   const newAmount = parseFloat(document.getElementById('edit-amount').value);
-  expenses[idx] = { ...exp, amount: newAmount, twd: Math.round(newAmount * exp.rate), memo: document.getElementById('edit-memo').value };
+  const updated = { ...exp, amount: newAmount, twd: Math.round(newAmount * exp.rate), memo: document.getElementById('edit-memo').value };
+  expenses[idx] = updated;
   localStorage.setItem('palau-expenses', JSON.stringify(expenses));
   closeEditModal();
   renderOverview();
+
+  // Sync: delete old + create new in Notion
+  if (typeof id === 'string' && id.includes('-')) {
+    fetch(API_BASE + '/api/expenses/' + id, { method: 'DELETE' }).catch(() => {});
+    fetch(API_BASE + '/api/expenses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated),
+    }).then(r => r.ok ? r.json() : null).then(saved => {
+      if (saved) { expenses[idx].id = saved.id; localStorage.setItem('palau-expenses', JSON.stringify(expenses)); }
+    }).catch(() => {});
+  }
 }
 
 function closeEditModal() { document.getElementById('edit-modal').classList.remove('show'); }
@@ -1164,6 +1226,7 @@ document.querySelectorAll('i[data-px]').forEach(el => {
   }
 });
 fetchRate();
+loadExpensesFromAPI();
 const initPage = location.hash.slice(1) || 'home';
 if (initPage !== 'home') showPage(initPage);
 else updateBadges();
