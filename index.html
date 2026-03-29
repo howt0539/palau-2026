@@ -701,7 +701,10 @@ window.addEventListener('popstate', () => {
   inSubPage = page !== 'home';
   showPage(page);
 });
-// iOS Safari 暫停動畫修復：回到頁面時重建泡泡
+// iOS Safari bfcache 回復時重建泡泡
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) createBubbles();
+});
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') createBubbles();
 });
