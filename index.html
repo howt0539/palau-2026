@@ -319,6 +319,32 @@
   .nav-card-muted:hover { background: rgba(255,255,255,0.06); }
   .nav-card-muted .nav-icon { font-size: 0.9rem; display: inline; }
   .nav-card-muted .nav-label { font-weight: 600; font-size: 0.68rem; color: #4a7a94; display: inline; margin-left: 4px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-light); color: var(--text-primary); padding: 10px 20px; border-radius: var(--radius-pill); font-size: 0.82rem; font-weight: 600; border: 1px solid var(--surface-border); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 200; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(52,211,153,0.3); }
+  .toast.success::before { content: '✓ '; color: var(--success); }
+
+  /* Page transition */
+  .page { display: none; opacity: 0; transition: opacity 0.2s ease; }
+  .page.active { display: block; opacity: 1; }
+
+  /* Accordion */
+  .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-lg); cursor: pointer; margin-bottom: 8px; transition: var(--transition); }
+  .accordion-header:hover { background: var(--surface-hover); }
+  .accordion-header .acc-title { font-weight: 800; font-size: 0.95rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+  .accordion-header .acc-arrow { color: var(--text-muted); font-size: 0.8rem; transition: transform 0.2s; }
+  .accordion-header.open .acc-arrow { transform: rotate(90deg); }
+  .accordion-body { display: none; }
+  .accordion-body.open { display: block; }
+
+  /* Onboarding */
+  .onboarding { position: fixed; inset: 0; z-index: 300; background: rgba(5,27,46,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; }
+  .onboarding-icon { font-size: 4rem; margin-bottom: 16px; }
+  .onboarding-title { font-size: 1.3rem; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+  .onboarding-desc { font-size: 0.88rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 24px; }
+  .onboarding .btn { max-width: 280px; }
 </style>
 </head>
 <body>
@@ -331,7 +357,7 @@
   <!-- ===== 首頁 ===== -->
   <div id="page-home" class="page active">
     <div class="header">
-      <h1>🇵🇼 Palau 2026</h1>
+      <h1><i data-px="wave" data-sz="22"></i> Palau 2026</h1>
       <p>帛琉旅遊手帳</p>
     </div>
 
@@ -503,30 +529,45 @@
   <div id="page-flight" class="page">
     <div class="header" style="margin-bottom:14px;">
       <h1><i data-px="plane" data-sz="22"></i> 航班 / 住宿</h1>
-      <p>輸入後自動儲存</p>
+      <p>點擊展開編輯，輸入後自動儲存</p>
     </div>
 
-    <div class="card">
-      <div class="card-title"><i data-px="depart" data-sz="18"></i> 去程</div>
-      <div class="field"><label>航班編號</label><input type="text" data-flight="dep_flight" placeholder="例：CI 2791" oninput="saveFlightInfo()"></div>
-      <div class="field"><label>日期</label><input type="date" data-flight="dep_date" oninput="saveFlightInfo()"></div>
-      <div class="field"><label>起飛時間</label><input type="time" data-flight="dep_time" oninput="saveFlightInfo()"></div>
-      <div class="field"><label>出發地</label><input type="text" data-flight="dep_from" placeholder="例：桃園 TPE" oninput="saveFlightInfo()"></div>
-      <div class="field"><label>目的地</label><input type="text" data-flight="dep_to" placeholder="例：帛琉 ROR" oninput="saveFlightInfo()"></div>
-      <div class="field"><label>備註</label><input type="text" data-flight="dep_note" placeholder="例：集合時間、航廈" oninput="saveFlightInfo()"></div>
+    <div class="accordion-header" onclick="toggleAccordion(this)">
+      <span class="acc-title"><i data-px="depart" data-sz="18"></i> 去程</span>
+      <span class="acc-arrow">▸</span>
+    </div>
+    <div class="accordion-body">
+      <div class="card" style="margin-top:0;border-radius:0 0 14px 14px;">
+        <div class="field"><label>航班編號</label><input type="text" data-flight="dep_flight" placeholder="例：CI 2791" oninput="saveFlightInfo()"></div>
+        <div class="field"><label>日期</label><input type="date" data-flight="dep_date" oninput="saveFlightInfo()"></div>
+        <div class="field"><label>起飛時間</label><input type="time" data-flight="dep_time" oninput="saveFlightInfo()"></div>
+        <div class="field"><label>出發地</label><input type="text" data-flight="dep_from" placeholder="例：桃園 TPE" oninput="saveFlightInfo()"></div>
+        <div class="field"><label>目的地</label><input type="text" data-flight="dep_to" placeholder="例：帛琉 ROR" oninput="saveFlightInfo()"></div>
+        <div class="field"><label>備註</label><input type="text" data-flight="dep_note" placeholder="例：集合時間、航廈" oninput="saveFlightInfo()"></div>
+      </div>
     </div>
 
-    <div class="card">
-      <div class="card-title"><i data-px="arrive" data-sz="18"></i> 回程</div>
-      <div class="field"><label>航班編號</label><input type="text" data-flight="ret_flight" placeholder="例：CI 2792" oninput="saveFlightInfo()"></div>
-      <div class="field"><label>日期</label><input type="date" data-flight="ret_date" oninput="saveFlightInfo()"></div>
-      <div class="field"><label>起飛時間</label><input type="time" data-flight="ret_time" oninput="saveFlightInfo()"></div>
-      <div class="field"><label>出發地</label><input type="text" data-flight="ret_from" placeholder="例：帛琉 ROR" oninput="saveFlightInfo()"></div>
-      <div class="field"><label>目的地</label><input type="text" data-flight="ret_to" placeholder="例：桃園 TPE" oninput="saveFlightInfo()"></div>
-      <div class="field"><label>備註</label><input type="text" data-flight="ret_note" placeholder="" oninput="saveFlightInfo()"></div>
+    <div class="accordion-header" onclick="toggleAccordion(this)">
+      <span class="acc-title"><i data-px="arrive" data-sz="18"></i> 回程</span>
+      <span class="acc-arrow">▸</span>
+    </div>
+    <div class="accordion-body">
+      <div class="card" style="margin-top:0;border-radius:0 0 14px 14px;">
+        <div class="field"><label>航班編號</label><input type="text" data-flight="ret_flight" placeholder="例：CI 2792" oninput="saveFlightInfo()"></div>
+        <div class="field"><label>日期</label><input type="date" data-flight="ret_date" oninput="saveFlightInfo()"></div>
+        <div class="field"><label>起飛時間</label><input type="time" data-flight="ret_time" oninput="saveFlightInfo()"></div>
+        <div class="field"><label>出發地</label><input type="text" data-flight="ret_from" placeholder="例：帛琉 ROR" oninput="saveFlightInfo()"></div>
+        <div class="field"><label>目的地</label><input type="text" data-flight="ret_to" placeholder="例：桃園 TPE" oninput="saveFlightInfo()"></div>
+        <div class="field"><label>備註</label><input type="text" data-flight="ret_note" placeholder="" oninput="saveFlightInfo()"></div>
+      </div>
     </div>
 
-    <div class="card">
+    <div class="accordion-header" onclick="toggleAccordion(this)">
+      <span class="acc-title"><i data-px="hotel" data-sz="18"></i> 住宿</span>
+      <span class="acc-arrow">▸</span>
+    </div>
+    <div class="accordion-body">
+      <div class="card" style="margin-top:0;border-radius:0 0 14px 14px;">
       <div class="card-title"><i data-px="hotel" data-sz="18"></i> 住宿</div>
       <div class="field"><label>飯店名稱</label><input type="text" data-flight="hotel_name" placeholder="" oninput="saveFlightInfo()"></div>
       <div class="field"><label>地址</label><input type="text" data-flight="hotel_addr" placeholder="" oninput="saveFlightInfo()"></div>
@@ -534,6 +575,7 @@
       <div class="field"><label>退房日期</label><input type="date" data-flight="hotel_checkout" oninput="saveFlightInfo()"></div>
       <div class="field"><label>訂房編號</label><input type="text" data-flight="hotel_confirm" placeholder="" oninput="saveFlightInfo()"></div>
       <div class="field"><label>備註</label><input type="text" data-flight="hotel_note" placeholder="例：含早餐、接駁車" oninput="saveFlightInfo()"></div>
+      </div>
     </div>
   </div>
 
@@ -587,6 +629,22 @@
   </div>
 
 </main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Onboarding -->
+<div class="onboarding" id="onboarding" style="display:none;">
+  <div class="onboarding-icon">🌊</div>
+  <div class="onboarding-title">歡迎來到帛琉手帳</div>
+  <div class="onboarding-desc">
+    記帳・行程記錄・生物圖鑑<br>
+    你的旅行好夥伴<br><br>
+    首頁可以快速換算幣值<br>
+    下方卡片進入各功能
+  </div>
+  <button class="btn btn-primary" onclick="dismissOnboarding()">開始探索 →</button>
+</div>
 
 <!-- Bottom Tab Bar -->
 <nav class="tab-bar" id="tab-bar" style="display:none;" aria-label="main navigation">
@@ -889,6 +947,7 @@ async function saveExpense() {
   selectedCat = '';
   goStep(1);
   renderExpenses();
+  showToast('已記錄 $' + amount.toFixed(2), 'success');
 
   // Sync to Notion
   try {
@@ -1013,6 +1072,7 @@ function addTrip() {
   document.getElementById('photo-input-0').value = '';
   document.getElementById('photo-input-1').value = '';
   renderPhotoSlots(); setDefaultTime(); renderTrips();
+  showToast('足跡已儲存', 'success');
 }
 
 function deleteTrip(id) {
@@ -1132,6 +1192,7 @@ function saveEditTrip(id) {
   localStorage.setItem('palau-trips', JSON.stringify(trips));
   closeEditModal();
   renderOverview();
+  showToast('已更新', 'success');
 }
 
 function editExpense(e, id) {
@@ -1161,6 +1222,7 @@ function saveEditExpense(id) {
   localStorage.setItem('palau-expenses', JSON.stringify(expenses));
   closeEditModal();
   renderOverview();
+  showToast('已更新', 'success');
 
   // Sync: delete old + create new in Notion
   if (typeof id === 'string' && id.includes('-')) {
@@ -1179,9 +1241,12 @@ function closeEditModal() { document.getElementById('edit-modal').classList.remo
 function escAttr(s) { return s.replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 
 // ===== Flight / Hotel =====
+let flightSaveTimer;
 function saveFlightInfo() {
   document.querySelectorAll('[data-flight]').forEach(el => { flightInfo[el.dataset.flight] = el.value; });
   localStorage.setItem('palau-flight', JSON.stringify(flightInfo));
+  clearTimeout(flightSaveTimer);
+  flightSaveTimer = setTimeout(() => showToast('已儲存', 'success'), 500);
 }
 function loadFlightInfo() {
   document.querySelectorAll('[data-flight]').forEach(el => { el.value = flightInfo[el.dataset.flight] || ''; });
@@ -1268,8 +1333,36 @@ function clickFish(id) {
   renderFishGuide();
   if (clicks === 3) {
     const fish = fishList.find(f => f.id === id);
-    if (fish) setTimeout(() => alert(`🎉 發現${fish.name}！\n${fish.desc}`), 100);
+    if (fish) showToast(`🎉 發現${fish.name}！`, 'success');
   }
+}
+
+// ===== Toast =====
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (type || '');
+  void t.offsetHeight;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ===== Accordion =====
+function toggleAccordion(header) {
+  const body = header.nextElementSibling;
+  header.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+// ===== Onboarding =====
+function checkOnboarding() {
+  if (!localStorage.getItem('palau-onboarded')) {
+    document.getElementById('onboarding').style.display = 'flex';
+  }
+}
+function dismissOnboarding() {
+  localStorage.setItem('palau-onboarded', '1');
+  document.getElementById('onboarding').style.display = 'none';
 }
 
 // ===== Utils =====
@@ -1286,6 +1379,7 @@ document.querySelectorAll('i[data-px]').forEach(el => {
 });
 fetchRate();
 loadExpensesFromAPI();
+checkOnboarding();
 
 // ===== Bottom Tab Bar =====
 const tabBar = document.getElementById('tab-bar');
