@@ -699,6 +699,16 @@ window.addEventListener('popstate', () => {
   inSubPage = page !== 'home';
   showPage(page);
 });
+// iOS Safari 暫停動畫修復：回到頁面時重啟泡泡
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    document.querySelectorAll('.bubble').forEach(b => {
+      b.style.animationPlayState = 'paused';
+      void b.offsetHeight;
+      b.style.animationPlayState = 'running';
+    });
+  }
+});
 function showPage(page) {
   currentPage = page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
