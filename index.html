@@ -28,14 +28,14 @@
   .header h1 { font-size: 1.4rem; color: #5ec4d4; letter-spacing: 1px; }
   .header p { font-size: 0.78rem; color: #6b9ab8; }
 
-  /* Bottom tab bar */
-  .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-around; align-items: flex-start; background: rgba(5,27,46,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(94,196,212,0.15); padding: 6px 0; padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+  /* Top tab bar */
+  .tab-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-around; align-items: flex-end; background: rgba(5,27,46,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(94,196,212,0.15); padding: 6px 0; padding-top: max(6px, env(safe-area-inset-top)); }
   .tab-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; min-width: 48px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .tab-icon { width: 24px; height: 24px; opacity: 0.45; transition: opacity 0.2s; image-rendering: pixelated; }
   .tab-label { font-size: 0.6rem; color: #6b9ab8; transition: color 0.2s; letter-spacing: 0.02em; }
   .tab-item.active .tab-icon { opacity: 1; }
   .tab-item.active .tab-label { color: #5ec4d4; }
-  .page:not(#page-home).active { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .page:not(#page-home).active { padding-top: calc(56px + env(safe-area-inset-top)); }
 
   /* Cards */
   .card { background: rgba(255,255,255,0.07); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 14px; padding: 18px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.08); }
@@ -675,13 +675,25 @@ let selectedCat = '';
 })();
 
 // ===== Page Navigation (hash-based) =====
+let leftHome = false;
 function goPage(page) {
   const hash = page === 'home' ? location.pathname : '#' + page;
-  if (location.hash.slice(1) !== page) {
+  if (page === 'home') {
+    history.replaceState(null, '', hash);
+    leftHome = false;
+  } else if (!leftHome) {
     history.pushState(null, '', hash);
+    leftHome = true;
+  } else {
+    history.replaceState(null, '', hash);
   }
   showPage(page);
 }
+window.addEventListener('popstate', () => {
+  const page = location.hash.slice(1) || 'home';
+  leftHome = page !== 'home';
+  showPage(page);
+});
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active');
