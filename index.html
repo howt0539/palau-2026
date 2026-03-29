@@ -714,7 +714,7 @@ function showPage(page) {
   document.getElementById(`page-${page}`).classList.add('active');
   window.scrollTo(0, 0);
   if (typeof updateTabBar === 'function') updateTabBar(page);
-  if (page === 'home') updateBadges();
+  if (page === 'home') { createBubbles(); updateBadges(); }
   if (page === 'trip') { setDefaultTime(); renderTrips(); }
   if (page === 'expense') { renderExpenses(); updateExpRateDisplay(); }
   if (page === 'overview') renderOverview();
